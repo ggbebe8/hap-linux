@@ -180,7 +180,7 @@ export default class HapExtension extends Extension {
     }
 
     _clickItem(win, frame, [x, y]) {
-        if (![x, y].every(v => Number.isFinite(v) && v >= 0 && v <= 1))
+        if (![x, y].every(v => Number.isFinite(v) && v >= 0 && v <= global.stage.width + global.stage.height))
             throw new Error('클릭 좌표가 유효하지 않습니다.');
         let clicks = 1;
         // Nautilus file items open with a double click unless configured otherwise.
@@ -188,7 +188,7 @@ export default class HapExtension extends Extension {
             const schema = Gio.SettingsSchemaSource.get_default().lookup('org.gnome.nautilus.preferences', true);
             clicks = schema && new Gio.Settings({settings_schema: schema}).get_string('click-policy') === 'single' ? 1 : 2;
         }
-        this._pointer.notify_absolute_motion(GLib.get_monotonic_time(), frame.x + x * frame.width, frame.y + y * frame.height);
+        this._pointer.notify_absolute_motion(GLib.get_monotonic_time(), x, y);
         const title = win.get_title();
         let step = 0;
         // Let Mutter deliver the motion and remove the overlay's input region

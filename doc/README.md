@@ -65,7 +65,7 @@ gsettings --schemadir "${XDG_DATA_HOME:-$HOME/.local/share}/gnome-shell/extensio
 
 단축키가 반응하지 않으면 GNOME 확장이 활성화되어 있는지, 전체 사용자 확장이 비활성화되어 있지 않은지 확인하세요.
 GNOME 기본 입력기 전환과 겹치는 `Super+Shift+Space`는 피하세요.
-요소가 없다고 나오면 접근성을 켠 후 해당 앱을 완전히 종료하고 다시 실행해 보세요. Chromium/Electron 계열은 접근성 트리를 켜야 합니다. Chromium은 `chromium --force-renderer-accessibility`, VSCode는 `code --force-renderer-accessibility`로 실행하거나 해당 옵션을 실행 프로필에 추가하세요. 이미 실행 중인 프로세스는 완전히 종료한 뒤 다시 시작해야 합니다.
+요소가 없다고 나오면 접근성을 켠 후 해당 앱을 완전히 종료하고 다시 실행해 보세요. Firefox와 Nautilus는 보통 별도 옵션 없이 트리를 제공하지만, 실행 중인 Chromium/VSCode가 트리를 내보내지 않으면 프로그램 쪽에서 없는 UI 정보를 만들어낼 수 없습니다. Chromium은 `chromium --force-renderer-accessibility`, VSCode는 `code --force-renderer-accessibility`로 실행하거나 해당 옵션을 실행 프로필에 추가하세요. 이미 실행 중인 프로세스는 완전히 종료한 뒤 다시 시작해야 합니다.
 샌드박스 앱은 접근성 버스가 허용되어야 합니다. Chromium/Electron 등은 접근성 트리 노출 여부가 실행 설정과 배포 방식에 따라 다릅니다.
 
 ## 테스트
