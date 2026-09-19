@@ -1,0 +1,8 @@
+<schemalist>
+  <schema id="org.gnome.shell.extensions.hap-linux" path="/org/gnome/shell/extensions/hap-linux/">
+    <key name="show-hints" type="as">
+      <default>['&lt;Super&gt;&lt;Shift&gt;f']</default>
+      <summary>Show actionable elements in the active window</summary>
+    </key>
+  </schema>
+</schemalist>

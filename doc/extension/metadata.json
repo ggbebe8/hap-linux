@@ -1,0 +1,8 @@
+{
+  "uuid": "hap-linux@local",
+  "name": "HAP Linux",
+  "description": "Keyboard hints for the active window using AT-SPI Actions on Wayland",
+  "shell-version": ["50"],
+  "version": 1,
+  "settings-schema": "org.gnome.shell.extensions.hap-linux"
+}
