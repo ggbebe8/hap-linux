@@ -1,0 +1,8 @@
+<schemalist>
+  <schema id="org.gnome.shell.extensions.grid-click" path="/org/gnome/shell/extensions/grid-click/">
+    <key name="show-grid" type="as">
+      <default>['&lt;Super&gt;&lt;Shift&gt;g']</default>
+      <summary>Open keyboard click grid</summary>
+    </key>
+  </schema>
+</schemalist>

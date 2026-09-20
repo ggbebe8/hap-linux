@@ -24,7 +24,6 @@ class Target:
     rect: Rect
     window_rect: Rect | None = None
     pointer: bool = False
-    screen_rect: Rect | None = None
 
 
 class Accessibility:
@@ -48,6 +47,9 @@ class Accessibility:
                 app = desktop.get_child_at_index(i)
                 if app.get_process_id() != pid:
                     continue
+                # This is a new snapshot. Chromium can otherwise retain stale
+                # children/states after layout changes in the AT-SPI cache.
+                app.clear_cache()
                 for j in range(min(app.get_child_count(), 256)):
                     check()
                     win = app.get_child_at_index(j)
@@ -89,11 +91,9 @@ class Accessibility:
                             index = names.index('listitem.scroll-to')
                         rect = Rect.from_atspi(component.get_extents(Atspi.CoordType.WINDOW))
                         if (index is not None or pointer) and rect.normalized(window_rect) is not None:
-                            screen_rect = (Rect.from_atspi(component.get_extents(Atspi.CoordType.SCREEN))
-                                           if pointer else None)
                             targets.append(Target(node, index if index is not None else -1,
                                                   names[index] if index is not None else '',
-                                                  node.get_name(), rect, window_rect, pointer, screen_rect))
+                                                  node.get_name(), rect, window_rect, pointer))
                 count = node.get_child_count()
                 if count > 4000:
                     truncated = True
@@ -109,12 +109,10 @@ class Accessibility:
         for label, target in zip(labels(len(targets)), targets):
             x, y = target.rect.normalized(window_rect)
             hint = dict(label=label, name=target.name[:160], x=x, y=y, pointer=target.pointer)
-            if target.pointer and target.screen_rect is not None:
-                hint['click_x'] = target.screen_rect.x + target.screen_rect.width / 2
-                hint['click_y'] = target.screen_rect.y + target.screen_rect.height / 2
             hints.append(hint)
             refs[label] = target
-        return dict(hints=hints, truncated=truncated), refs
+        return dict(hints=hints, truncated=truncated,
+                    bounds=dict(width=window_rect.width, height=window_rect.height)), refs
 
     def validate(self, target, cancelled):
         if cancelled.is_set():
@@ -140,14 +138,7 @@ class Accessibility:
                  if action is not None else [])
         if preferred_action(names) is not None or cancelled.is_set():
             raise RuntimeError('UI가 변경되었습니다. 단축키로 다시 탐색하세요.')
-        if target.screen_rect is None:
-            return target.rect.normalized(target.window_rect)
-        node = target.accessible
-        screen_rect = Rect.from_atspi(node.get_component_iface().get_extents(Atspi.CoordType.SCREEN))
-        if target.screen_rect is None or screen_rect != target.screen_rect:
-            raise RuntimeError('UI가 변경되었습니다. 단축키로 다시 탐색하세요.')
-        return (screen_rect.x + screen_rect.width / 2,
-                screen_rect.y + screen_rect.height / 2)
+        return target.rect.normalized(target.window_rect)
 
     def activate(self, target, cancelled):
         action = self.validate(target, cancelled)

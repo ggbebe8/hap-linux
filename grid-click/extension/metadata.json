@@ -1,0 +1,8 @@
+{
+  "uuid": "grid-click@local",
+  "name": "Grid Click",
+  "description": "Keyboard grid selection and pointer clicks on GNOME Wayland. No application accessibility required.",
+  "shell-version": ["50"],
+  "version": 1,
+  "settings-schema": "org.gnome.shell.extensions.grid-click"
+}

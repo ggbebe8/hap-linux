@@ -64,3 +64,18 @@ class ActivationTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.backend.prepare_click(self.target, self.cancelled)
         self.action.do_action.assert_not_called()
+
+    def test_pointer_uses_window_coordinates_even_if_screen_origin_is_unknown(self):
+        from hap.accessibility import Atspi
+        self.target.pointer = True
+        self.target.window_rect = Rect(0, 0, 100, 100)
+        self.target.action_name = 'listitem.scroll-to'
+        self.action.get_action_name.return_value = 'listitem.scroll-to'
+        self.action.get_n_actions.return_value = 1
+        def extents(coord):
+            # Some Wayland toolkits cannot provide a desktop SCREEN origin.
+            if coord != Atspi.CoordType.WINDOW:
+                raise AssertionError('Desktop SCREEN coordinates must not be used for clicking')
+            return self.target.rect
+        self.node.get_component_iface.return_value.get_extents.side_effect = extents
+        self.assertEqual(self.backend.prepare_click(self.target, self.cancelled), (.25, .4))

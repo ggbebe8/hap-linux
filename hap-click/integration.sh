@@ -15,4 +15,4 @@ cat tests/shell-driver.js >> "$XDG_DATA_HOME/gnome-shell/extensions/hap-linux@lo
 gsettings set org.gnome.shell enabled-extensions "['hap-linux@local']"
 gsettings set org.gnome.desktop.interface toolkit-accessibility true
 echo "Isolated integration logs: $HAP_TEST_DIR"
-timeout 60s dbus-run-session --config-file=tests/session.conf -- bash scripts/integration-session.sh
+timeout 120s dbus-run-session --config-file=tests/session.conf -- bash scripts/integration-session.sh

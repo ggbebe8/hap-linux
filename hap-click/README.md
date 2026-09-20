@@ -73,6 +73,8 @@ GNOME 기본 입력기 전환과 겹치는 `Super+Shift+Space`는 피하세요.
 ```bash
 ./test.sh
 ./integration.sh
+# 설치된 VSCode도 격리된 프로필로 검증
+HAP_TEST_CODE=1 ./integration.sh
 ```
 
 `test.sh`는 힌트 충돌·접두사, 좌표 clipping, 창 식별, Action 우선순위를 검사하고 Python/GJS 문법, GSettings 스키마, 스테이징 설치를 검증합니다.
@@ -80,6 +82,7 @@ GNOME 기본 입력기 전환과 겹치는 `Super+Shift+Space`는 피하세요.
 `integration.sh`는 `.build/` 아래에 설치본·설정·런타임 디렉터리를 만들고 별도 D-Bus 세션과 **headless GNOME Wayland compositor**를 실행합니다.
 GTK4 테스트 창을 탐색해 실제 버튼의 `clicked` 신호를 확인합니다. 테스트 전용 Shell 드라이버가 가상 키보드로 단축키·Esc·힌트 문자를 입력해 오버레이와 grab 해제까지 검증합니다.
 Nautilus에서는 테스트용 빈 폴더의 힌트를 입력하고 실제 폴더가 열리는지도 확인합니다.
+VSCode 추가 테스트는 `/usr/share/code/code`를 사용하고 `.build/` 안에 별도 사용자·확장·공유 데이터 폴더를 만듭니다. 비최대화 창의 힌트 위치와 실제 클릭 좌표를 비교하고 패널 열기를 확인합니다.
 이 드라이버는 테스트용 복사본에만 추가되며 `install.sh`로 설치되는 확장에는 포함되지 않습니다.
 테스트 D-Bus의 AppArmor 중재만 끄는 설정을 사용하며 시스템 AppArmor나 실제 사용자 버스 설정은 변경하지 않습니다.
 로그는 실행 시 출력되는 `.build/integration.*/`와 표준 출력에 남습니다.
@@ -101,7 +104,7 @@ Nautilus에서는 테스트용 빈 폴더의 힌트를 입력하고 실제 폴�
 - 현재 활성 창만 대상으로 하며, PID와 창 제목·ACTIVE 상태로 연결합니다. 여러 후보를 구별하지 못하면 오류로 종료합니다.
 - Button, Link, Menu, Tab 등에서 click, press, activate 등 실행 의미가 있는 Action을 우선 선택합니다. Electron/Chromium처럼 Action 대신 역할과 Component만 노출하는 앱은 버튼·링크·메뉴·탭·트리/목록 항목 등을 Wayland 가상 포인터로 보완합니다. 알 수 없는 첫 Action을 임의로 실행하지 않습니다. 비활성·숨김·창 밖 요소는 제외합니다.
 - 열기 Action 없이 `listitem.scroll-to`를 제공하는 GTK 목록 항목에 한해 좌표 클릭을 사용합니다. Nautilus는 사용자의 한 번/두 번 클릭 설정을 따르고, 다른 앱은 한 번 클릭합니다. 실행 직전에 요소의 위치·이름·상태와 활성 창을 다시 확인합니다. Action이 없는 canvas·게임·일부 커스텀 UI에는 힌트를 제공하지 못합니다.
-- Wayland에서 앱의 전역 좌표를 가정하지 않습니다. AT-SPI WINDOW 좌표를 창 크기로 정규화하고 Shell의 실제 창 위치로 변환합니다. 툴킷이 보고하는 창 영역과 Shell frame이 다르거나 서버 측 장식이 있는 경우 위치 오차가 날 수 있습니다.
+- Wayland에서 앱의 전역 좌표를 가정하지 않습니다. 표시와 클릭 모두 AT-SPI WINDOW 정규화 좌표를 동일하게 변환합니다. VSCode처럼 접근성 루트가 그림자를 포함한 창 버퍼 크기와 일치하면 버퍼 영역을 사용합니다. 그 외에는 보이는 창 영역을 사용하며, 특수한 툴킷이나 배율 설정은 추가 검증이 필요합니다.
 - 한 번의 스냅샷에서 최대 4,000개 노드·500개 힌트를 처리합니다. 제한에 도달하면 `(일부)`를 표시합니다. 탐색 시간 제한은 약 4초이며 진행 중인 개별 AT-SPI 호출이 끝나는 시간은 추가될 수 있습니다.
 - 동일한 위치에 있는 요소들의 힌트는 겹칠 수 있습니다. UI의 Action 자체가 지원하지 않는 기능은 실행할 수 없습니다.
 - AT-SPI에 노출되지 않는 앱, 중복된 창 제목과 ACTIVE 정보 부재, 앱 재시작·창 내용 변경 등은 재탐색이 필요할 수 있습니다.

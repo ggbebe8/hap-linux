@@ -117,9 +117,11 @@ finally:
 folder = Path(os.environ['HAP_TEST_DIR']) / 'HAP Files Fixture'
 child = folder / 'HAP Open Target'
 child.mkdir(parents=True)
-files = subprocess.Popen(['nautilus', '--new-window', str(folder)], env={**os.environ, 'WAYLAND_DEBUG': 'client'})
+(folder / 'AAA Other Folder').mkdir()
+(folder / 'ZZZ Other Folder').mkdir()
+files = subprocess.Popen(['nautilus', '--new-window', str(folder)])
 try:
-    time.sleep(2)
+    time.sleep(5)
     shell('Prepare', '(s)', (folder.name,))
     time.sleep(1)
     shortcut()
@@ -136,8 +138,13 @@ try:
         time.sleep(.1)
     shell('Capture', '(s)', (str(folder.parent / 'after.png'),))
     assert result['focus'] == child.name, result
+    assert abs(result['pointer'][0] - (selected['x'] + 12)) <= 1, (selected, result)
+    assert abs(result['pointer'][1] - (selected['y'] + 10)) <= 1, (selected, result)
     assert not result['overlay'] and not result['grab'], result
     print('PASS: real Nautilus hint keys open the selected folder')
 finally:
     files.terminate()
     files.wait(timeout=5)
+
+if os.environ.get('HAP_TEST_CODE'):
+    exec(compile(Path('tests/code_geometry.py').read_text(), 'tests/code_geometry.py', 'exec'))

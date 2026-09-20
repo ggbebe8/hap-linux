@@ -16,7 +16,8 @@ Python은 PyGObject의 Atspi 2.0 바인딩을 사용한다. 별도 pyatspi·pip 
 
 [Ubuntu 26.04 Component 문서](https://ubuntu.com/desktop/docs/en/26.04/reference/accessibility/dbus/org.a11y.atspi.Component/)는 SCREEN과 WINDOW 좌표계를 구분한다.
 MVP는 WINDOW extents를 사용한다. 앱이 화면 전체 위치를 알아야 할 필요가 없고, Shell에서 알고 있는 활성 창 frame과 결합할 수 있다.
-일반 Action 실행에는 마우스 위치를 사용하지 않는다. 좌표 클릭 보완 대상은 AT-SPI `SCREEN` 좌표의 절대 중심점을 사용한다. Electron/Chromium이 `WINDOW` 요청에도 화면 기준 좌표를 반환하는 경우가 있어, GNOME 창 프레임 위치를 다시 더하지 않는다.
+일반 Action 실행에는 마우스 위치를 사용하지 않는다. 힌트 표시와 좌표 클릭은 모두 같은 WINDOW 정규화 좌표를 사용한다. Wayland 앱이 반환하는 SCREEN 원점을 데스크톱 절대 위치로 간주하지 않는다.
+VSCode의 비최대화 창은 접근성 루트 크기에 클라이언트 그림자를 포함한다. Shell의 `get_buffer_rect()` 크기가 접근성 루트 크기와 일치하면 버퍼 영역으로 변환하고, 그렇지 않으면 기존 `get_frame_rect()`를 사용한다. 두 경로 모두 같은 `_hintPoint()`를 사용해 표시와 클릭 좌표가 달라지지 않게 한다.
 
 RemoteDesktop portal을 통한 입력 에뮬레이션은 사용자의 별도 세션 승인과 입력 주입 관리가 필요하므로 MVP에는 넣지 않았다.
 클릭/열기 Action 없이 `listitem.scroll-to`만 제공하는 GTK 목록 항목은 Shell 내부의 Clutter 가상 포인터로 클릭한다.

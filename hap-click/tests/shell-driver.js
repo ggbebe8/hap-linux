@@ -5,6 +5,8 @@ const testXML = `<node><interface name="io.github.haplinux.Test">
 <method name="Key"><arg type="u" direction="in"/><arg type="b" direction="in"/></method>
 <method name="State"><arg type="s" direction="out"/></method>
 <method name="Capture"><arg type="s" direction="in"/></method>
+<method name="Windows"><arg type="s" direction="out"/></method>
+<method name="Resize"/>
 </interface></node>`;
 const productionEnable = HapExtension.prototype.enable;
 const productionDisable = HapExtension.prototype.disable;
@@ -13,6 +15,12 @@ HapExtension.prototype.enable = function () {
     const device = global.stage.context.get_backend().get_default_seat()
         .create_virtual_device(Clutter.InputDeviceType.KEYBOARD_DEVICE);
     this._testDriver = Gio.DBusExportedObject.wrapJSObject(testXML, {
+        Windows: () => JSON.stringify(global.get_window_actors().map(a => ({title: a.meta_window.get_title(), pid: a.meta_window.get_pid()}))),
+        Resize: () => {
+            const win = global.display.focus_window;
+            win.unmaximize();
+            win.move_resize_frame(true, 180, 90, 920, 560);
+        },
         CaptureAsync: async ([path], invocation) => {
             const stream = Gio.File.new_for_path(path).replace(null, false, Gio.FileCreateFlags.NONE, null);
             await new Shell.Screenshot().screenshot(true, stream);

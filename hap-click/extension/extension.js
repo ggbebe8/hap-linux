@@ -73,8 +73,14 @@ export default class HapExtension extends Extension {
             Main.notify('HAP Linux', '키보드를 확보하지 못했습니다. 열린 메뉴를 닫고 다시 시도하세요.');
             return;
         }
-        for (const signal of ['unmanaged', 'position-changed', 'size-changed'])
-            this._signals.push([win, win.connect(signal, () => this._close())]);
+        const initialFrame = win.get_frame_rect();
+        this._signals.push([win, win.connect('unmanaged', () => this._close())]);
+        for (const signal of ['position-changed', 'size-changed'])
+            this._signals.push([win, win.connect(signal, () => {
+                const current = win.get_frame_rect();
+                if (['x', 'y', 'width', 'height'].some(k => initialFrame[k] !== current[k]))
+                    this._close();
+            })]);
         this._signals.push([global.display, global.display.connect('notify::focus-window', () => {
             if (global.display.focus_window !== this._window)
                 this._close();
@@ -100,11 +106,12 @@ export default class HapExtension extends Extension {
                     Main.notify('HAP Linux', '이 창에서 실행 가능한 AT-SPI 요소를 찾지 못했습니다.');
                     return;
                 }
-                const frame = win.get_frame_rect();
+                this._bounds = payload.bounds;
+                const geometry = this._coordinateRect(win, payload.bounds);
                 this._hints = payload.hints.map(hint => {
                     const actor = new St.Label({text: hint.label, style_class: 'hap-hint'});
-                    actor.set_position(Math.max(frame.x, Math.min(frame.x + frame.width - 48, frame.x + hint.x * frame.width - 12)),
-                        Math.max(frame.y, Math.min(frame.y + frame.height - 24, frame.y + hint.y * frame.height - 10)));
+                    const [x, y] = this._hintPoint(geometry, [hint.x, hint.y]);
+                    actor.set_position(x - 12, y - 10);
                     this._overlay.add_child(actor);
                     return {...hint, actor};
                 });
@@ -143,6 +150,7 @@ export default class HapExtension extends Extension {
             const win = this._window;
             const frame = win.get_frame_rect();
             const title = win.get_title();
+            const bounds = this._bounds;
             // Pop the modal grab before sending the AT-SPI action.
             this._close(false);
             const generation = this._generation;
@@ -160,7 +168,7 @@ export default class HapExtension extends Extension {
                         Main.notify('HAP Linux', '활성 창이 변경되었습니다. 다시 탐색하세요.');
                         return;
                     }
-                    this._clickItem(win, frame, reply);
+                    this._clickItem(win, frame, reply, bounds);
                 } else if (!reply[0]) {
                     Main.notify('HAP Linux', '앱이 선택한 요소의 실행을 거부했습니다.');
                 }
@@ -179,9 +187,27 @@ export default class HapExtension extends Extension {
             ` · 입력: ${this._prefix || '—'} · ${example.length}글자 입력 (예: ${example}) · Esc 취소`;
     }
 
-    _clickItem(win, frame, [x, y]) {
-        if (![x, y].every(v => Number.isFinite(v) && v >= 0 && v <= global.stage.width + global.stage.height))
+    _coordinateRect(win, bounds) {
+        const frame = win.get_frame_rect();
+        const buffer = win.get_buffer_rect();
+        // Chromium's accessible root includes client-side shadows. GTK may
+        // instead expose just the visible frame. Compare dimensions, never
+        // treat a Wayland client's SCREEN origin as a desktop position.
+        const error = rect => Math.abs(rect.width - bounds.width) + Math.abs(rect.height - bounds.height);
+        return bounds && error(buffer) < error(frame) && error(buffer) <= 4 ? buffer : frame;
+    }
+
+    _hintPoint(frame, point) {
+        if (!point.every(v => Number.isFinite(v) && v >= 0 && v <= 1))
             throw new Error('클릭 좌표가 유효하지 않습니다.');
+        return [frame.x + point[0] * frame.width, frame.y + point[1] * frame.height];
+    }
+
+    _clickItem(win, frame, point, bounds) {
+        const geometry = this._coordinateRect(win, bounds);
+        const [x, y] = this._hintPoint(geometry, point);
+        if (x < frame.x || y < frame.y || x >= frame.x + frame.width || y >= frame.y + frame.height)
+            throw new Error('창 밖의 요소는 클릭할 수 없습니다. 다시 탐색하세요.');
         let clicks = 1;
         // Nautilus file items open with a double click unless configured otherwise.
         if (win.get_gtk_application_id() === 'org.gnome.Nautilus') {
