@@ -1,0 +1,15 @@
+#panel.keyd-visual-mode-active {
+    background-color: #782323;
+    background-image: none;
+    transition-duration: 0ms;
+}
+
+.keyd-visual-mode-label {
+    color: #ff7777;
+    font-weight: bold;
+}
+
+.keyd-visual-mode-error {
+    color: #ffc857;
+    font-weight: bold;
+}

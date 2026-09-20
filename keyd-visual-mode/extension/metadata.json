@@ -1,0 +1,7 @@
+{
+  "uuid": "keyd-visual-mode@local",
+  "name": "Keyd Visual Mode",
+  "description": "Show the keyd caps_locked layer with a red top bar. Event driven, without periodic polling.",
+  "shell-version": ["50"],
+  "version": 1
+}
