@@ -9,14 +9,22 @@ import {Grid, KEYS} from './grid.js';
 
 const MODIFIERS = Clutter.ModifierType.CONTROL_MASK | Clutter.ModifierType.MOD1_MASK |
     Clutter.ModifierType.SUPER_MASK | Clutter.ModifierType.SHIFT_MASK;
-const PHYSICAL = {24: 'Q', 25: 'W', 26: 'E', 38: 'A', 39: 'S', 40: 'D', 52: 'Z', 53: 'X', 54: 'C', 27: 'R'};
+const PHYSICAL = {24: 'Q', 25: 'W', 26: 'E', 38: 'A', 39: 'S', 40: 'D', 52: 'Z', 53: 'X', 54: 'C', 27: 'R', 43: 'H'};
 
 export default class GridClick extends Extension {
     enable() {
         this._pointer = global.stage.context.get_backend().get_default_seat()
             .create_virtual_device(Clutter.InputDeviceType.POINTER_DEVICE);
+        this._seat = global.stage.context.get_backend().get_default_seat();
+        this._cursorTracker = global.backend.get_cursor_tracker();
         this._settings = this.getSettings();
         this._signals = [
+            [this._cursorTracker, this._cursorTracker.connect('position-invalidated', () => {
+                if (!this._cursorHidden) return;
+                const [x, y] = global.get_pointer();
+                if (x !== this._hiddenPoint[0] || y !== this._hiddenPoint[1])
+                    this._restoreCursor();
+            })],
             [Main.sessionMode, Main.sessionMode.connect('updated', () => this._close())],
             [Main.layoutManager, Main.layoutManager.connect('monitors-changed', () => this._close())],
             [Main.overview, Main.overview.connect('showing', () => this._close())],
@@ -66,6 +74,7 @@ export default class GridClick extends Extension {
         if (key === Clutter.KEY_Return || key === Clutter.KEY_KP_Enter) this._commit(1, 1);
         else if (key === Clutter.KEY_space) this._commit(1, 2);
         else if (letter === 'R') this._commit(3, 1);
+        else if (letter === 'H') this._commit(null, 0);
         else {
             if (key === Clutter.KEY_BackSpace) this._grid.back();
             else if (key === Clutter.KEY_Tab || key === Clutter.KEY_ISO_Left_Tab) this._grid.nextMonitor();
@@ -105,7 +114,7 @@ export default class GridClick extends Extension {
         const status = new St.Label({style_class: 'grid-click-status', text:
             `Grid Click · 화면 ${this._grid.index + 1}/${this._grid.monitors.length} · ${Math.round(area.width)}×${Math.round(area.height)} · (${x}, ${y})\n` +
             'QWE / ASD / ZXC 좁히기 · 방향키 미세 조정 · Backspace 되돌리기\n' +
-            'Enter 클릭 · Space 더블클릭 · R 오른쪽 · Tab 화면 · Home 처음 · Esc 취소 · ? 도움말 닫기'});
+            'Enter 클릭 · Space 더블클릭 · R 오른쪽 · H 호버 · Tab 화면 · Home 처음 · Esc 취소 · ? 도움말 닫기'});
         status.set_position(m.x + 12, m.y + 36);
         this._overlay.add_child(status);
     }
@@ -127,6 +136,7 @@ export default class GridClick extends Extension {
                     return GLib.SOURCE_REMOVE;
                 }
                 this._pointer.notify_absolute_motion(GLib.get_monotonic_time(), x, y);
+                if (clicks === 0) { this._clickTimer = 0; this._hideCursorAfterInput(x, y); return GLib.SOURCE_REMOVE; }
                 step = 0;
                 return GLib.SOURCE_CONTINUE;
             }
@@ -137,9 +147,35 @@ export default class GridClick extends Extension {
             this._heldButton = step % 2 === 0 ? button : null;
             this._pointer.notify_button(GLib.get_monotonic_time(), button,
                 this._heldButton ? Clutter.ButtonState.PRESSED : Clutter.ButtonState.RELEASED);
-            if (++step === clicks * 2) { this._clickTimer = 0; return GLib.SOURCE_REMOVE; }
+            if (++step === clicks * 2) { this._clickTimer = 0; this._hideCursorAfterInput(x, y); return GLib.SOURCE_REMOVE; }
             return GLib.SOURCE_CONTINUE;
         });
+    }
+
+    _hideCursorAfterInput(x, y) {
+        // Let our queued motion/button events reach the application first.
+        this._hideTimer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
+            this._hideTimer = 0;
+            const [px, py] = global.get_pointer();
+            if (px !== x || py !== y || Main.sessionMode.isLocked || Main.overview.visible)
+                return GLib.SOURCE_REMOVE;
+            // Visibility inhibition normally drops Wayland pointer focus. Keep
+            // focus so hover effects and tooltips survive while only the image hides.
+            this._seat.inhibit_unfocus();
+            this._cursorTracker.inhibit_cursor_visibility();
+            this._hiddenPoint = [x, y];
+            this._cursorHidden = true;
+            return GLib.SOURCE_REMOVE;
+        });
+    }
+
+    _restoreCursor() {
+        if (this._hideTimer) GLib.source_remove(this._hideTimer);
+        this._hideTimer = 0;
+        if (!this._cursorHidden) return;
+        this._cursorHidden = false;
+        this._cursorTracker.uninhibit_cursor_visibility();
+        this._seat.uninhibit_unfocus();
     }
 
     _stopClick() {
@@ -151,6 +187,7 @@ export default class GridClick extends Extension {
     }
 
     _close() {
+        this._restoreCursor();
         this._stopClick();
         if (this._grab) Main.popModal(this._grab);
         this._grab = null;
@@ -165,6 +202,8 @@ export default class GridClick extends Extension {
         for (const [object, id] of this._signals) object.disconnect(id);
         this._signals = [];
         this._pointer = null;
+        this._cursorTracker = null;
+        this._seat = null;
         this._settings = null;
     }
 }

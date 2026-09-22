@@ -28,6 +28,11 @@ def activate(app):
     gesture.connect('pressed', lambda g, n, x, y: record(g, n, x, y, 'press'))
     gesture.connect('released', lambda g, n, x, y: record(g, n, x, y, 'release'))
     area.add_controller(gesture)
+    motion = Gtk.EventControllerMotion()
+    hover_marker = marker.with_name('hover.json')
+    motion.connect('enter', lambda *_: hover_marker.write_text('true'))
+    motion.connect('leave', lambda *_: hover_marker.write_text('false'))
+    area.add_controller(motion)
     window.present()
 
 app.connect('activate', activate)

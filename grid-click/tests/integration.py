@@ -72,6 +72,27 @@ try:
     assert not state()['overlay'] and not state()['grab'] and not events()
     print('PASS: shortcut, grid refinement, undo, monitor switching, Escape without clicks', flush=True)
 
+    shortcut()
+    point = select_target()
+    previous = len(events())
+    stroke(ord('h'))
+    for _ in range(40):
+        if not state()['clicking']:
+            break
+        time.sleep(.05)
+    time.sleep(.2)
+    final = state()
+    assert not final['overlay'] and not final['grab'] and not final['clicking'], final
+    assert all(abs(final['pointer'][i] - point[i]) <= 1 for i in (0, 1)), (final, point)
+    assert len(events()) == previous, events()[previous:]
+    assert final['cursorHidden'] and not final['cursorVisible'], final
+    assert json.loads((directory / 'hover.json').read_text()), 'Hiding cursor lost hover'
+    shell('Move', '(ii)', (point[0] + 10, point[1]))
+    time.sleep(.2)
+    assert state()['cursorVisible'] and not state()['cursorHidden'], state()
+    print('PASS: hover preserved while cursor hidden; external pointer motion restores cursor', flush=True)
+    print('PASS: hover moves pointer, releases overlay, and sends no clicks', flush=True)
+
     for trigger, button, count in [(0xff0d, 1, 1), (ord(' '), 1, 2), (ord('r'), 3, 1)]:
         time.sleep(.5)
         previous = len(events())
@@ -92,13 +113,26 @@ try:
         assert all(e['button'] == button for e in actual), actual
         if count == 2:
             assert actual[-1]['n'] == 2, actual
+        time.sleep(.2)
         final = state()
         assert not final['overlay'] and not final['grab'], final
         assert all(abs(final['pointer'][i] - point[i]) <= 1 for i in (0, 1)), (final, point)
+        assert final['cursorHidden'] and not final['cursorVisible'], final
+        assert json.loads((directory / 'hover.json').read_text()), 'Click hiding lost hover'
         r = final['frame']
         assert abs(actual[0]['x'] + r['x'] - point[0]) <= 1, actual
         assert abs(actual[0]['y'] + r['y'] - point[1]) <= 1, actual
         print(f'PASS: real Wayland button={button}, clicks={count}, correct application coordinates, GTK_A11Y=none', flush=True)
+    shell('Restore')
+    assert state()['cursorVisible'] and not state()['cursorHidden'], state()
+    print('PASS: cleanup restores cursor visibility', flush=True)
+    shortcut()
+    select_target()
+    stroke(ord('h'))
+    time.sleep(.3)
+    assert state()['cursorHidden'], state()
+    assert shell('DisableCleanup')[0], 'Disable must restore cursor and disconnect signals'
+    print('PASS: disabling extension restores cursor and removes event handlers', flush=True)
 finally:
     fixture.terminate()
     fixture.wait(timeout=5)

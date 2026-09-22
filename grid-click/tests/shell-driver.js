@@ -2,6 +2,9 @@
 import Gio from 'gi://Gio';
 const testXML = `<node><interface name="io.github.gridclick.Test">
 <method name="Prepare"/>
+<method name="Move"><arg type="i" direction="in"/><arg type="i" direction="in"/></method>
+<method name="Restore"/>
+<method name="DisableCleanup"><arg type="b" direction="out"/></method>
 <method name="Key"><arg type="u" direction="in"/><arg type="b" direction="in"/></method>
 <method name="State"><arg type="s" direction="out"/></method>
 <method name="Capture"><arg type="s" direction="in"/></method>
@@ -12,10 +15,18 @@ GridClick.prototype.enable = function () {
     originalEnable.call(this);
     const keyboard = global.stage.context.get_backend().get_default_seat()
         .create_virtual_device(Clutter.InputDeviceType.KEYBOARD_DEVICE);
+    const mouse = this._seat.create_virtual_device(Clutter.InputDeviceType.POINTER_DEVICE);
     this._testDriver = Gio.DBusExportedObject.wrapJSObject(testXML, {
         Prepare: () => {
             Main.overview.hide();
             global.get_window_actors().find(a => a.meta_window.get_title() === 'Grid Click Fixture')?.meta_window.activate(global.get_current_time());
+        },
+        Move: (x, y) => mouse.notify_absolute_motion(GLib.get_monotonic_time(), x, y),
+        Restore: () => this._close(),
+        DisableCleanup: () => {
+            const tracker = this._cursorTracker;
+            originalDisable.call(this);
+            return tracker.get_pointer_visible() && this._signals.length === 0;
         },
         Key: (key, pressed) => keyboard.notify_keyval(GLib.get_monotonic_time(), key,
             pressed ? Clutter.KeyState.PRESSED : Clutter.KeyState.RELEASED),
@@ -26,6 +37,7 @@ GridClick.prototype.enable = function () {
                 grid: this._grid ? {area: this._grid.area, point: this._grid.point,
                     index: this._grid.index, monitors: this._grid.monitors, cells: this._grid.cells(), depth: this._grid.history.length} : null,
                 frame: r ? {x: r.x, y: r.y, width: r.width, height: r.height} : null,
+                cursorVisible: this._cursorTracker.get_pointer_visible(), cursorHidden: Boolean(this._cursorHidden),
                 pointer: global.get_pointer(), clicking: Boolean(this._clickTimer)});
         },
         CaptureAsync: async ([path], invocation) => {
