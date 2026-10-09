@@ -1,0 +1,52 @@
+# First verify recognition using --debug; then set dry_run: false.
+dry_run: true
+preview: true
+preview_backend: overlay  # overlay or notification
+device:
+  auto_detect: true
+  rotation: auto  # GNOME display orientation; or 0, 90, 180, 270
+  # display_connector: eDP-1
+  # path: /dev/input/event12
+  # name_contains: ELAN
+  # Pixel mode maps device ranges onto these logical dimensions.
+  screen_width: 1920
+  screen_height: 1200
+  swap_axes: false
+  invert_x: false
+  invert_y: false
+recognition:
+  distance_mode: pixels
+  min_point_distance: 8
+  simplify_epsilon: 20
+  dominance_ratio: 1.7
+  min_segment_distance: 100
+  min_total_distance: 220
+  max_gesture_duration_ms: 1500
+  corner_min_angle_deg: 55
+  corner_max_angle_deg: 125
+gestures:
+  - name: close_tab
+    label: 탭 닫기
+    sequence: [DOWN, RIGHT]
+    action:
+      type: key
+      keys: [CTRL, W]
+  - name: next_tab
+    label: 다음 탭
+    sequence: [UP, RIGHT]
+    action:
+      type: key
+      keys: [CTRL, TAB]
+  - name: previous_tab
+    label: 이전 탭
+    sequence: [UP, LEFT]
+    action:
+      type: key
+      keys: [CTRL, SHIFT, TAB]
+  - name: close_window
+    label: 현재 창 닫기
+    fingers: 2
+    sequence: [DOWN]
+    action:
+      type: key
+      keys: [ALT, F4]

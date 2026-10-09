@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "touchgesture"
+version = "0.1.0"
+description = "Passive touchscreen gesture daemon for Linux Wayland"
+requires-python = ">=3.10"
+dependencies = ["evdev>=1.7,<2", "PyYAML>=6,<7", "dbus-next>=0.2.3,<0.3"]
+
+[project.scripts]
+touchgesture = "touchgesture.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+touchgesture = ["default.yaml"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
