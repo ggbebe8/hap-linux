@@ -1,0 +1,8 @@
+{
+  "uuid": "surface-hangul-key@local",
+  "name": "Touch Keyboard Hangul Key",
+  "description": "Add a Hangul toggle key to the built-in GNOME screen keyboard when the Hangul input source is selected.",
+  "shell-version": ["50"],
+  "version": 1,
+  "session-modes": ["user"]
+}
