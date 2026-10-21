@@ -88,7 +88,7 @@ if [[ "$execute" == true ]]; then
   if [[ ! -w /dev/uinput ]]; then
     sudo setfacl -m "u:$(id -u):rw" /dev/uinput
   fi
-  echo '실제 키 입력 모드: ↓→는 현재 앱에 Ctrl+W, ↑→는 Ctrl+Tab, ↑←는 Ctrl+Shift+Tab, 두 손가락 ↓는 Alt+F4를 보냅니다.'
+  echo '실제 키 입력 모드: ↓→는 현재 앱에 Ctrl+W, ↑→는 Ctrl+Tab, ↑←는 Ctrl+Shift+Tab, 두 손가락 ↓는 Ctrl+Q를 보냅니다.'
 else
   echo '인식 테스트 모드: 실제 키는 전송하지 않습니다.'
 fi

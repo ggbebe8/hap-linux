@@ -5,7 +5,7 @@
 - `↓→` (`DOWN → RIGHT`): `Ctrl+W`
 - `↑→` (`UP → RIGHT`): `Ctrl+Tab` (다음 탭)
 - `↑←` (`UP → LEFT`): `Ctrl+Shift+Tab` (이전 탭)
-- 두 손가락 `↓`: `Alt+F4` (현재 창 닫기)
+- 두 손가락 `↓`: `Ctrl+Q` (현재 창 닫기)
 - `./try.sh`는 인식만 테스트합니다. `./install.sh`의 첫 설치는 실제 동작 모드입니다.
 
 대상 환경은 Ubuntu 26 계열 / GNOME / Wayland / 터치스크린입니다. Python 3.10 이상과 Linux evdev/uinput을 사용합니다. 이 저장소의 자동 테스트는 하드웨어 없이 실행하며, 실제 Ubuntu/GNOME 터치스크린에서의 동작은 사용자 장비에서 아래 절차로 검증해야 합니다.
@@ -101,13 +101,13 @@ gnome-extensions enable touchgesture-overlay@local
 
 확장 파일은 `${XDG_DATA_HOME:-~/.local/share}/gnome-shell/extensions/touchgesture-overlay@local/`에 설치됩니다. 테스트용 파일 설치만 하려면 `./install-overlay.sh --no-enable`, 파일 제거만 하려면 `./uninstall-overlay.sh --no-disable`을 사용하세요.
 
-## 두 손가락 아래로 쓸어내리기 → Alt+F4
+## 두 손가락 아래로 쓸어내리기 → Ctrl+Q
 
 `./try.sh --execute`를 다시 실행하면 바로 사용할 수 있습니다. 두 손가락을 거의 동시에(200ms 이내) 대고, 함께 화면 아래로 충분히 쓸어내린 뒤 둘 다 떼세요. 빠른 테스트 모드에서는 각 손가락이 화면 높이의 약 18% 이상, 기본 픽셀 설정에서는 각 220 논리 픽셀 이상 이동해야 합니다. 처음 닿은 시점부터 모두 뗄 때까지 1.5초 이내여야 합니다.
 
 두 손가락의 경로를 각각 확인하므로 한 손가락만 움직이는 동작, 서로 반대 방향, 짧은 이동은 실행하지 않습니다. 세 번째 손가락, 손가락 교체, 늦게 합류한 두 번째 손가락도 취소합니다. 한 손가락 제스처와 중복 실행하지 않으며, 가로·세로 회전 모두 지원합니다.
 
-`Alt+F4`는 현재 포커스 창에 닫기 요청을 보냅니다. 앱에 따라 저장 확인 창이 뜨거나 해당 창만 닫힐 수 있으며, 프로세스를 강제 종료하지 않습니다. 기본 `./try.sh`는 인식만 출력합니다.
+`Ctrl+Q`는 현재 포커스 창/앱에 종료 요청을 보냅니다. 앱에 따라 저장 확인 창이 뜨거나 해당 창만 닫힐 수 있으며, 프로세스를 강제 종료하지 않습니다. 기본 `./try.sh`는 인식만 출력합니다.
 
 사용자 설정에 `gestures:`를 따로 작성했다면 기존 목록 끝에 다음 항목을 추가하세요. `fingers`를 생략하면 기존처럼 한 손가락입니다.
 
@@ -117,7 +117,7 @@ gnome-extensions enable touchgesture-overlay@local
     sequence: [DOWN]
     action:
       type: key
-      keys: [ALT, F4]
+      keys: [CTRL, Q]
 ```
 
 ## Surface Go 등 가로·세로 회전

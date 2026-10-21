@@ -49,4 +49,4 @@ gestures:
     sequence: [DOWN]
     action:
       type: key
-      keys: [ALT, F4]
+      keys: [CTRL, Q]

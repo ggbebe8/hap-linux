@@ -80,7 +80,7 @@ def detect(pair,rotation=0):
 def test_both_down_and_rotated(rotation):
     singles,pairs = record(swipe(rotation=rotation))
     assert not singles and len(pairs) == 1
-    assert detect(pairs[0],rotation)['action']['keys'] == ['ALT','F4']
+    assert detect(pairs[0],rotation)['action']['keys'] == ['CTRL','Q']
 
 
 @pytest.mark.parametrize('mode',['late','third','replacement','slow_release'])
